@@ -137,7 +137,7 @@ with tab2:
         if set(expected_columns).issubset(input_data.columns):
             
             
-            input_data['Prediction LR'] = ''
+            input_data['Prediction LR'] = 0
 
             for i in range(len(input_data)):
                 arr = input_data.iloc[i, :-1].values
