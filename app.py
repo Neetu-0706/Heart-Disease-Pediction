@@ -4,6 +4,13 @@ import numpy as np
 import pickle
 import base64
 
+#function to create a download link for a Dataframe as CSV file
+def get_binary_file_downloader_html(df):
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+    href = f'<a href="data:file/csv;base64,{b64}" download="prediction.csv">Download Prediction CSV File</a>'
+    return href
+
 st.title("Heart Disease Predictor")
 tab1, tab2, tab3 = st.tabs(['Predict', 'Bulk Predict', 'Model Information'])
 
@@ -106,3 +113,45 @@ if st.button("Submit"):
             st.write("No heart disease detected.")
         else:
             st.write("Heart disease detected.")
+
+        st.markdown('------------------------------')
+
+with tab2:
+    st.title("Upload CSV file for Bulk Prediction")
+    st.subheader("Instructions to note before uploading the file")
+    st.info("""1.\n
+            2.n\
+""")
+    
+    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+    
+    if uploaded_file is not None:
+        #To read the uploaded CSV file into a DataFrame
+        input_data = pd.read_csv(uploaded_file)
+        model = pickle.load(open('LogisticRegression.pkl', 'rb'))
+
+        #Ensure that the input data has the same columns as the training data
+        expected_columns = ['Age', 'Sex', 'ChestPainType', 'RestingBP', 'Cholesterol', 'FastingBS',
+ 'RestingECG', 'MaxHR', 'ExerciseAngina', 'Oldpeak', 'ST_Slope']
+        
+        if set(expected_columns).issubset(input_data.columns):
+            
+            
+            input_data['Prediction LR'] = ''
+
+            for i in range(len(input_data)):
+                arr = input_data.iloc[i, :-1].values
+                input_data['Prediction LR'][i] = model.predict([arr])[0]
+            input_data.to_csv('predictedHeartLR.csv')
+
+            #Display the Prediction
+            st.subheader("Predictions:")
+            st.write(input_data)
+
+            #Craete a button to download the updateed CSV file
+            st.markdown(get_binary_file_downloader_html(input_data), unsafe_allow_html=True)
+
+        else:
+            st.warning("Please make sure the uploaded CSV file contains the required columns.")
+    else:
+            st.info("Please upload a CSV file to get predictions.")
